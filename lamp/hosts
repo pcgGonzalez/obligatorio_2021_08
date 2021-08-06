@@ -1,7 +1,7 @@
 [webservers]
-webserver.local
+centos
 
 [dbservers]
-dbserver.local
+ubuntu
 
 
