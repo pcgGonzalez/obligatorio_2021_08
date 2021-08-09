@@ -1,14 +1,12 @@
 
 [webservers]
-ansible_user=ansible
+ubuntu ansible_user=ansible
 ansible_password=ansible01
 ansible_ssh_private_key_file=/home/ansible/.ssh/id_rsa
 ansible_become=true
-ubuntu
-centos
 
 [dbservers]
-ansible_user=ansible
+centos ansible_user=ansible
 ansible_password=ansible01
 ansible_ssh_private_key_file=/home/ansible/.ssh/id_rsa
 ansible_become=true
