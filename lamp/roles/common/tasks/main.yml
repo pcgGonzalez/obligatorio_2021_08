@@ -4,6 +4,8 @@
 - name: Install ntp
   yum: name=ntp state=present
   tags: ntp
+  
+
 
 - name: Install common dependencies
   yum: name={{ item }} state=installed
