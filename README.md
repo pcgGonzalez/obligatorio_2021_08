@@ -1,4 +1,4 @@
-#        Obligatorio 2021 
+#            Obligatorio 2021 
 ## Taller Instalacion Servidores Linux 
 
 El fin del obligatorio es instlar un stack LAMP el mismo contiene Apache, MySQL, MariaDB, PHP.
