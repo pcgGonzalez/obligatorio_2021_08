@@ -6,7 +6,7 @@
         name: chrony 
         state: present
       tags: chrony
-      when: ansible_distribution == "CentOS" or
+      when: ansible_distribution == "centos" or
             ansible_distribution_major_version == "8"
 
 # Para versiones Debian instalacion de chrony
@@ -25,7 +25,7 @@
         - python3-libselinux
         - python3-libsemanage
 
-      when: ansible_distribution == "CentOS" or
+      when: ansible_distribution == "centos" or
             ansible_distribution_major_version == "8"
 
 # Se instalan las dependecias en Debian
@@ -43,7 +43,7 @@
       when: ansible_os_family == "Debian"
 
 # Se instalan las dependecias en CentOS
-    - name: Install common dependencies CentOS
+    - name: Install common dependencies centos
       dnf:
         name: "{{ dependencies }}"
         state: present
@@ -52,14 +52,12 @@
         - python3-libselinux
         - python3-libsemanage
         - policycoreutils-python-utils
-# El paquete firewalld ya esta instalado, quizas hay que usar este?
-#        - python3-firewall
       when: ansible_os_family == "RedHat"
 
 # Configura el archivo chrony
     - name: Configure Chrony file
       template: 
-        src: "/root/obligatorio/obligatorio_2021_08/lamp/roles/common/templates/chrony.conf.j2"
+        src: "/home/ansible/repo/obligatorio_2021_08/lamp/roles/common/templates/chrony.conf.j2"
         dest: "/etc/chrony.conf"
         mode: 0600
       tags: chrony

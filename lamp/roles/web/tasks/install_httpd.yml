@@ -76,5 +76,4 @@
 
     - name: Configure SELinux to allow httpd to connect to remote database
       seboolean: name=httpd_can_network_connect_db state=yes persistent=yes
-      when: ansible_os_family == "RedHat"
-© 2021 GitHub, Inc.
+      when: ansible_os_family == "RedHat" © 2021 GitHub, Inc.

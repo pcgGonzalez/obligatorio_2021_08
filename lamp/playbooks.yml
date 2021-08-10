@@ -10,7 +10,7 @@
     - common
 
 - name: configure and deploy the webservers and application code
-  hosts: webservers
+  hosts: all
   remote_user: ansible
   become: yes
 
@@ -18,7 +18,7 @@
     - web
 
 - name: deploy MySQL and configure the databases
-  hosts: dbservers
+  hosts: all
   remote_user: ansible
   become: yes
 

@@ -146,8 +146,8 @@
         state: present
       when: ansible_facts['os_family'] == "Debian"   
 
-# Creacion de usuario para conexion a la BD para RH
-    - name: Crear usuario en BD para RH
+# Creacion de usuario para conexion
+    - name: Crear usuario para la la conexion
       no_log: true
       mysql_user:
         name: "{{ dbuser }}"
@@ -156,8 +156,8 @@
         state: present
       when: ansible_facts['os_family'] == "RedHat"
 
-# Creacion de usuario para conexion a la BD para Debian
-    - name: Crear usuario en BD para Debian
+# Creacion de usuario para conexion 
+    - name: Crear usuario para la conexion
       no_log: true
       mysql_user:
         login_unix_socket: /var/lib/mysql/mysql.sock
@@ -165,5 +165,4 @@
         password: "{{ upassword }}"
         priv: '{{ dbname }}.*:ALL,GRANT'
         state: present
-      when: ansible_facts['os_family'] == "Debian"
-© 2021 GitHub, Inc.
+      when: ansible_facts['os_family'] == "Debian" © 2021 GitHub, Inc.
