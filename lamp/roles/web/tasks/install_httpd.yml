@@ -1,26 +1,80 @@
 ---
-# These tasks install http and the php modules.
+# Estas tareas instalan http y los módulos php.
+    - name: Install httpd and php on CentOS
+      yum: 
+        name: "{{ paquetes }}"
+        state: present
+      vars:
+        paquetes:
+          - httpd
+          - php
+          - php-mysqlnd
+      when: ansible_os_family == "RedHat"
 
-- name: Install httpd and php
-  yum: name={{ item }} state=present
-  with_items:
-   - httpd
-   - php
-   - php-mysql
+# Se configura la instalacion para Debian
+    - name: Install httpd and php on Debian
+      apt: 
+        name: "{{ paquetes }}"
+        state: present
+      vars:
+        paquetes:
+          - apache2
+          - php
+          - php-mysql
+      when: ansible_os_family == "Debian"
 
-- name: Install web role specific dependencies
-  yum: name={{ item }} state=installed
-  with_items:
-   - git
+# Se instalan los paquetes git
+    - name: Install web role specific dependencies for CentOS
+      yum:
+        name: "{{ paquete_git }}"
+        state: present
+      vars:
+        paquete_git:
+          - git
+      when: ansible_os_family == "RedHat"
 
-- name: Start firewalld
-  service: name=firewalld state=started enabled=yes
+# Se instalan los paquetes git
+    - name: Install web role specific dependencies Debian
+      apt:
+        name: "{{ paquete_git }}"
+        state: present
+      vars:
+        paquete_git:
+          - git
+      when: ansible_os_family == "Debian"
 
-- name: insert firewalld rule for httpd
-  firewalld: port={{ httpd_port }}/tcp permanent=true state=enabled immediate=yes
+# Levantar CentOS
+    - name: Start firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      when: ansible_os_family == "RedHat"
 
-- name: http service state
-  service: name=httpd state=started enabled=yes
+# Crear regla de Firewall Debian
+    - name: Firewall rule ufw
+      ufw:
+        rule: allow
+        port: "{{ httpd_port }}"
+        proto: tcp
+      when: ansible_os_family == "Debian"
 
-- name: Configure SELinux to allow httpd to connect to remote database
-  seboolean: name=httpd_can_network_connect_db state=true persistent=yes
+# Crear regla de Firewall CentOS
+    - name: insert firewalld rule for httpd
+      firewalld: port={{ httpd_port }}/tcp permanent=true state=enabled immediate=yes
+      when: ansible_os_family == "RedHat"
+
+#Levantar el servicio de Apache en CentOS
+    - name: http service state
+      service: name=httpd state=started enabled=yes
+      when: ansible_os_family == "RedHat"
+
+#Levantar el servicio de Apache en Debian
+    - name: Apache service state
+      service: name=apache2 state=started enabled=yes
+      when: ansible_os_family == "Debian"
+
+    - name: Configure SELinux to allow httpd to connect to remote database
+      seboolean: name=httpd_can_network_connect_db state=yes persistent=yes
+      when: ansible_os_family == "RedHat"
+© 2021 GitHub, Inc.

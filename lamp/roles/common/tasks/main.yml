@@ -1,24 +1,74 @@
 ---
-# This playbook contains common plays that will be run on all nodes.
+# Este libro de jugadas contiene jugadas comunes que se ejecutarán en todos los nodos.
+# Se quita ntp ya que fue removido de la version CentOS 8
+    - name: Install chrony for Centos 8
+      dnf:
+        name: chrony 
+        state: present
+      tags: chrony
+      when: ansible_distribution == "CentOS" or
+            ansible_distribution_major_version == "8"
 
-- name: Install ntp
-  yum: name=ntp state=present
-  tags: ntp
-  
+# Para versiones Debian instalacion de chrony
+    - name: Install Chrony on Debian
+      apt: name=chrony state=present
+      tags: chrony
+      when: ansible_os_family == "Debian"
 
 
-- name: Install common dependencies
-  yum: name={{ item }} state=installed
-  with_items:
-   - libselinux-python
-   - libsemanage-python
-   - firewalld
+    - name: Install common dependencies on CentOS 8
+      dnf:
+        name: "{{ dependencies }}"
+        state: installed
+      vars:
+        dependencies:
+        - python3-libselinux
+        - python3-libsemanage
 
-- name: Configure ntp file
-  template: src=ntp.conf.j2 dest=/etc/ntp.conf
-  tags: ntp
-  notify: restart ntp
+      when: ansible_distribution == "CentOS" or
+            ansible_distribution_major_version == "8"
 
-- name: Start the ntp service
-  service: name=ntpd state=started enabled=yes
-  tags: ntp
+# Se instalan las dependecias en Debian
+    - name: Install common dependencies on Debian
+      apt:
+        name: "{{ dependencies }}"
+        state: present
+      vars:
+        dependencies:
+        - python3-selinux
+        - python3-semanage
+        - policycoreutils
+        - selinux-utils
+        - selinux-basics
+      when: ansible_os_family == "Debian"
+
+# Se instalan las dependecias en CentOS
+    - name: Install common dependencies CentOS
+      dnf:
+        name: "{{ dependencies }}"
+        state: present
+      vars:
+        dependencies:
+        - python3-libselinux
+        - python3-libsemanage
+        - policycoreutils-python-utils
+# El paquete firewalld ya esta instalado, quizas hay que usar este?
+#        - python3-firewall
+      when: ansible_os_family == "RedHat"
+
+# Configura el archivo chrony
+    - name: Configure Chrony file
+      template: 
+        src: "/root/obligatorio/obligatorio_2021_08/lamp/roles/common/templates/chrony.conf.j2"
+        dest: "/etc/chrony.conf"
+        mode: 0600
+      tags: chrony
+      notify: restart chrony
+
+# Iniciar servicio de chronyd
+    - name: Start the chrony service
+      service:
+        name: chronyd
+        state: started
+        enabled: yes
+      tags: chrony

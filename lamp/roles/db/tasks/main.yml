@@ -1,37 +1,169 @@
 ---
 # This playbook will install MariaDB and create db user and give permissions.
+#- hosts : all
+#  remote_user: ansible
+#  become: yes
+#  tasks:
+# Se instala los paquetes en CentOS
+    - name: Install MariaDB package for CentOS
+      yum: 
+        name: "{{ paquetes }}"
+        state: present
+      vars:
+        paquetes:
+          - mariadb-server
+    # Se instalan paquetes de python
+          - python3-pip
+#          - python-mysqldb
+      when: ansible_os_family == "RedHat"
 
-- name: Install MariaDB package
-  yum: name={{ item }} state=installed
-  with_items:
-   - mariadb-server
-   - MySQL-python
+    # Se instalan los paquetes para Debian
+    - name: Install MariaDB package for Debian
+      apt: 
+        name: "{{ paquetes }}"
+        state: present
+      vars:
+        paquetes:
+          - mariadb-server
+          - python3-mysqldb
 
-- name: Configure SELinux to start mysql on any port
-  seboolean: name=mysql_connect_any state=true persistent=yes
+      when: ansible_os_family == "Debian"
 
-- name: Create Mysql configuration file
-  template: src=my.cnf.j2 dest=/etc/my.cnf
-  notify:
-  - restart mariadb
+    # Configuracion de SeLinux
+    - name: Configure SELinux to start mysql on any port
+      seboolean: 
+        name: mysql_connect_any
+        state: true
+        persistent: yes
+      when: ansible_os_family == "RedHat"
 
-- name: Create MariaDB log file
-  file: path=/var/log/mysqld.log state=touch owner=mysql group=mysql mode=0775
+# MySQL Debian
+    - name: Create Mysql configuration file
+      template: 
+        src: /root/obligatorio/obligatorio_2021_08/lamp/roles/db/templates/my.cnf.j2
+        dest: /etc/mysql/my.cnf
+        owner: mysql
+        group: mysql
+        mode: 0600
+      notify:
+      - restart mariadb
 
-- name: Create MariaDB PID directory
-  file: path=/var/run/mysqld state=directory owner=mysql group=mysql mode=0775
+    - name: Create MariaDB log file
+      file: 
+        path: /var/log/mysqld.log 
+        state: touch
+        owner: mysql
+        group: mysql
+        mode: 0775
 
-- name: Start MariaDB Service
-  service: name=mariadb state=started enabled=yes
+    - name: Create MariaDB PID directory
+      file:
+        path: /var/run/mysqld
+        state: directory
+        owner: mysql
+        group: mysql
+        mode: 0775
 
-- name: Start firewalld
-  service: name=firewalld state=started enabled=yes
+    - name: Start MariaDB Service
+      service:
+        name: mariadb
+        state: started
+        enabled: yes
+# Instalar pip3
+    - name: Instalar pip3
+      apt:
+        name: python3-pip
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
 
-- name: insert firewalld rule
-  firewalld: port={{ mysql_port }}/tcp permanent=true state=enabled immediate=yes
+# Instalamos librerias necesarias de Python para MySQL
+    - name: Instalar MySQL-python Debian
+      pip:
+        name: mysql-connector-python
+        executable: pip3
+        state: present
+#      when: ansible_facts['os_family'] == "Debian"
 
-- name: Create Application Database
-  mysql_db: name={{ dbname }} state=present
+    - name: Instalar PyMySQL
+      pip:
+        name: PyMySQL
+        executable: pip3
+        state: present
+#      when: ansible_facts['os_family'] == "Debian"
 
-- name: Create Application DB User
-  mysql_user: name={{ dbuser }} password={{ upassword }} priv=*.*:ALL host='%' state=present
+    - name: Start firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+      when: ansible_facts['os_family'] == "RedHat"
+
+    - name: insert firewalld rule
+      firewalld: port={{ mysql_port }}/tcp permanent=true state=enabled immediate=yes
+      when: ansible_facts['os_family'] == "RedHat"
+
+# Crear regla de Firewall Debian
+    - name: Firewall rule ufw
+      ufw:
+        rule: allow
+        port: "{{ mysql_port }}"
+        proto: tcp
+      when: ansible_os_family == "Debian"
+
+# Crear usuario de conexion a la BD RH
+    - name: Crear usuario en mariadb in RH
+      no_log: false
+      mysql_user:
+        name: "{{ dbuser }}"
+        password: "{{ upassword }}"
+        priv: '{{ dbname }}.*:ALL,GRANT'
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+# Crear usuario de conexion a la BD Debian
+    - name: Crear usuario en mariadb in Debian
+      no_log: false
+      mysql_user:
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        name: "{{ dbuser }}"
+        password: "{{ upassword }}"
+        priv: '{{ dbname }}.*:ALL,GRANT'
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+
+# Creacion de BD para RH
+    - name: Crear BD de aplicacion en RH
+      mysql_db:      
+        name: "{{ dbname }}"
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+# Creacion de BD para RH
+    - name: Crear BD de aplicacion en Debian
+      mysql_db:
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        name: "{{ dbname }}"
+        state: present
+      when: ansible_facts['os_family'] == "Debian"   
+
+# Creacion de usuario para conexion a la BD para RH
+    - name: Crear usuario en BD para RH
+      no_log: true
+      mysql_user:
+        name: "{{ dbuser }}"
+        password: "{{ upassword }}"
+        priv: '{{ dbname }}.*:ALL,GRANT'
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+
+# Creacion de usuario para conexion a la BD para Debian
+    - name: Crear usuario en BD para Debian
+      no_log: true
+      mysql_user:
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        name: "{{ dbuser }}"
+        password: "{{ upassword }}"
+        priv: '{{ dbname }}.*:ALL,GRANT'
+        state: present
+      when: ansible_facts['os_family'] == "Debian"
+© 2021 GitHub, Inc.
